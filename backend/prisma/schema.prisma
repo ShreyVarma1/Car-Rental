@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  RENTER
+  OWNER
+  ADMIN
+}
+
+enum CarStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum CarType {
+  HATCHBACK
+  SEDAN
+  SUV
+  MUV
+  LUXURY
+  ELECTRIC
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  ELECTRIC
+  HYBRID
+  CNG
+}
+
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+  CANCEL
+  LOGIN
+}
+
+model User {
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  phone          String?
+  passwordHash   String
+  drivingLicense String?
+  role           UserRole @default(RENTER)
+
+  cars          Car[]          @relation("CarOwner")
+  bookings      Booking[]      @relation("BookingRenter")
+  reviews       Review[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+model Car {
+  id           String       @id @default(uuid())
+  ownerId      String
+  make         String
+  model        String
+  year         Int
+  type         CarType
+  transmission Transmission
+  fuel         FuelType
+  seats        Int
+  city         String
+  pricePerDay  Decimal      @db.Decimal(10, 2)
+  status       CarStatus    @default(PENDING)
+
+  owner    User      @relation("CarOwner", fields: [ownerId], references: [id])
+  bookings Booking[]
+  reviews  Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([city])
+  @@index([status])
+  @@index([type])
+  @@index([transmission])
+  @@index([fuel])
+  @@index([pricePerDay])
+  @@index([city, status])
+}
+
+model AddOn {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  pricePerDay Decimal @db.Decimal(10, 2)
+  isActive    Boolean @default(true)
+
+  bookingAddOns BookingAddOn[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model Booking {
+  id              String @id @default(uuid())
+  referenceNumber String @unique
+
+  carId    String
+  renterId String
+
+  pickupAt  DateTime
+  dropOffAt DateTime
+
+  days Int
+
+  carPricePerDay Decimal @db.Decimal(10, 2)
+  addOnsTotal    Decimal @db.Decimal(10, 2)
+  subtotal       Decimal @db.Decimal(10, 2)
+  tax            Decimal @db.Decimal(10, 2)
+  totalAmount    Decimal @db.Decimal(10, 2)
+
+  status BookingStatus @default(CONFIRMED)
+
+  car    Car  @relation(fields: [carId], references: [id])
+  renter User @relation("BookingRenter", fields: [renterId], references: [id])
+
+  bookingAddOns BookingAddOn[]
+  review        Review?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([carId])
+  @@index([renterId])
+  @@index([status])
+  @@index([pickupAt])
+  @@index([dropOffAt])
+  @@index([carId, pickupAt, dropOffAt])
+}
+
+model BookingAddOn {
+  id String @id @default(uuid())
+
+  bookingId String
+  addOnId   String
+
+  pricePerDaySnapshot Decimal @db.Decimal(10, 2)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  addOn   AddOn   @relation(fields: [addOnId], references: [id])
+
+  @@unique([bookingId, addOnId])
+  @@index([bookingId])
+  @@index([addOnId])
+}
+
+model Review {
+  id String @id @default(uuid())
+
+  bookingId String @unique
+  carId     String
+  renterId  String
+
+  rating  Int
+  comment String?
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  car     Car     @relation(fields: [carId], references: [id])
+  renter  User    @relation(fields: [renterId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([carId])
+  @@index([renterId])
+  @@index([rating])
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  userId  String
+  title   String
+  message String
+  isRead  Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, isRead])
+}
+
+model ActivityLog {
+  id String @id @default(uuid())
+
+  userId   String?
+  action   ActivityAction
+  entity   String
+  entityId String?
+  details  Json?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([createdAt])
+}
