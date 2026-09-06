@@ -1,0 +1,30 @@
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  MinLength,
+} from "class-validator";
+
+export class RegisterDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(8)
+  password!: string;
+
+  @IsOptional()
+  @IsPhoneNumber("IN")
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  drivingLicense?: string;
+}

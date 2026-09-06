@@ -66,11 +66,12 @@ model User {
   drivingLicense String?
   role           UserRole @default(RENTER)
 
-  cars          Car[]          @relation("CarOwner")
-  bookings      Booking[]      @relation("BookingRenter")
-  reviews       Review[]
-  notifications Notification[]
-  activityLogs  ActivityLog[]
+  cars            Car[]            @relation("CarOwner")
+  bookings        Booking[]        @relation("BookingRenter")
+  reviews         Review[]
+  notifications   Notification[]
+  activityLogs    ActivityLog[]
+  refreshSessions RefreshSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -233,4 +234,19 @@ model ActivityLog {
   @@index([entity])
   @@index([entityId])
   @@index([createdAt])
+}
+
+model RefreshSession {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }

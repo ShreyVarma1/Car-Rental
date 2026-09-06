@@ -4,6 +4,7 @@ import * as Joi from "joi";
 
 import { PrismaModule } from "./prisma/prisma_module";
 import { HealthModule } from "./health/health.module";
+import { AuthModule } from "./auth/auth.module";
 
 @Module({
   imports: [
@@ -24,6 +25,11 @@ import { HealthModule } from "./health/health.module";
         JWT_EXPIRES_IN: Joi.string()
           .default("15m"),
 
+        REFRESH_TOKEN_EXPIRES_DAYS: Joi.number()
+          .integer()
+          .positive()
+          .default(7),
+
         DATABASE_URL: Joi.string()
           .uri()
           .required(),
@@ -32,6 +38,7 @@ import { HealthModule } from "./health/health.module";
 
     PrismaModule,
     HealthModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
