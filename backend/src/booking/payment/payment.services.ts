@@ -1,14 +1,16 @@
 import {
+  Inject,
   Injectable,
   InternalServerErrorException,
 } from "@nestjs/common";
 
-import { MockPaymentProvider } from "./mock-payment.provider";
+import type { PaymentProvider } from "./payment.provider";
 
 @Injectable()
 export class PaymentService {
   constructor(
-    private readonly paymentProvider: MockPaymentProvider,
+    @Inject("PaymentProvider")
+    private readonly paymentProvider: PaymentProvider,
   ) {}
 
   async processPayment(

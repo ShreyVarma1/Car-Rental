@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react"; // useEffect is imported
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/hooks/use_auth";
@@ -28,19 +28,32 @@ export default function LoginPage() {
     isLoading,
   } = useAuth();
 
-  const [email, setEmail] =
-    useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [password, setPassword] =
-    useState("");
+  // 1. ADD THIS STATE TO TRACK IF WE ARE ON THE CLIENT
+  const [isMounted, setIsMounted] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  // 2. ADD THIS EFFECT TO TRIGGER MOUNTING
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  useEffect(() => {
+    if (isMounted && !isLoading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isMounted, isLoading, isAuthenticated, router]);
 
-  if (isLoading) {
+  // 3. ADD THIS CONDITION FIRST TO PREVENT SSR MISMATCH
+  if (!isMounted) {
+    return null;
+  }
+
+  // Now these client-only state checks are completely safe!
+  if (isLoading || isAuthenticated) {
     return (
       <Box
         sx={{
@@ -52,12 +65,6 @@ export default function LoginPage() {
         <CircularProgress />
       </Box>
     );
-  }
-
-  if (isAuthenticated) {
-    router.replace("/dashboard");
-
-    return null;
   }
 
   async function handleSubmit(

@@ -38,11 +38,12 @@ import {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly logger: Logger = new Logger(AuthService.name),
     private readonly notificationService: NotificationService,
     private readonly activityService: ActivityService,
   ) {}

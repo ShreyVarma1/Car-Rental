@@ -81,12 +81,18 @@ export class ReviewService {
     const existingReview =
       await this.reviewRepository
         .findExistingReview(
-          dto.bookingId,
+          bookingId,
         );
 
     if (existingReview) {
       throw new ConflictException(
         "This booking has already been reviewed",
+      );
+    }
+
+    if (!dto.rating) {
+      throw new BadRequestException(
+        "Rating is required",
       );
     }
 
