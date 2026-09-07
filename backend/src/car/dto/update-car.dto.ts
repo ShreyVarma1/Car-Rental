@@ -1,0 +1,62 @@
+import {
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from "class-validator";
+
+import {
+  CarType,
+  FuelType,
+  Transmission,
+} from "../../../generated/prisma/client";
+
+export class UpdateCarDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  make?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  model?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1980)
+  @Max(new Date().getFullYear() + 1)
+  year?: number;
+
+  @IsOptional()
+  @IsEnum(CarType)
+  type?: CarType;
+
+  @IsOptional()
+  @IsEnum(Transmission)
+  transmission?: Transmission;
+
+  @IsOptional()
+  @IsEnum(FuelType)
+  fuel?: FuelType;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  seats?: number;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  city?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  pricePerDay?: number;
+}

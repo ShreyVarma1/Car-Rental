@@ -1,8 +1,27 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
+import {
+  Logger,
+} from "@nestjs/common";
+
+import {
+  ActivityAction,
+} from "../../generated/prisma/client";
+
+import {
+  NotificationService,
+} from "../engagement/notification/notification.service";
+
+import {
+  ActivityService,
+} from "../engagement/activity/activity.service";
+import {
+  UserRole,
+} from "../../generated/prisma/client";
 
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
@@ -23,6 +42,9 @@ export class AuthService {
     private readonly authRepository: AuthRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly logger: Logger = new Logger(AuthService.name),
+    private readonly notificationService: NotificationService,
+    private readonly activityService: ActivityService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -87,6 +109,16 @@ export class AuthService {
         "Invalid email or password",
       );
     }
+
+    await this.activityService.createActivity({
+      userId: user.id,
+      action: ActivityAction.LOGIN,
+      entity: "USER",
+      entityId: user.id,
+      details: {
+        email: user.email,
+      },
+    });
 
     const accessToken =
       await this.createAccessToken(user);
@@ -317,5 +349,85 @@ export class AuthService {
     );
 
     return expiresAt;
+  }
+async getAdminUsers() {
+  return this.authRepository.findAllUsers();
+}
+
+async getAdminUser(
+  userId: string,
+) {
+  const user =
+    await this.authRepository.findUserForAdmin(
+      userId,
+    );
+
+  if (!user) {
+    throw new NotFoundException(
+      "User not found",
+    );
+  }
+
+  return user;
+}
+
+async updateUserRole(
+  userId: string,
+  role: UserRole,
+  adminUserId: string,
+) {
+  if (userId === adminUserId) {
+    throw new ConflictException(
+      "You cannot change your own role",
+    );
+  }
+
+  const user =
+    await this.authRepository.findUserById(
+      userId,
+    );
+
+  if (!user) {
+    throw new NotFoundException(
+      "User not found",
+    );
+  }
+
+  return this.authRepository.updateUserRole(
+    userId,
+    role,
+  );
+}
+
+async deleteUser(
+  userId: string,
+  adminUserId: string,
+) {
+  if (userId === adminUserId) {
+    throw new ConflictException(
+      "You cannot delete your own account",
+    );
+  }
+
+  const user =
+    await this.authRepository.findUserById(
+      userId,
+    );
+
+  if (!user) {
+    throw new NotFoundException(
+      "User not found",
+    );
+  }
+
+  if (!user.isActive) {
+    throw new ConflictException(
+      "User account is already inactive",
+    );
+  }
+
+  return this.authRepository.deactivateUser(
+    userId,
+  );
   }
 }

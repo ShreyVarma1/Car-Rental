@@ -1,7 +1,12 @@
 import { Injectable } from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma_services";
-import { User } from "../../generated/prisma/client";
+
+import {
+  User,
+  BookingStatus,
+  UserRole,
+} from "../../generated/prisma/client";
 
 @Injectable()
 export class AuthRepository {
@@ -41,6 +46,154 @@ export class AuthRepository {
     });
   }
 
+  // --------------------------------------------------
+  // Admin user management
+  // --------------------------------------------------
+
+  async findAllUsers() {
+    return this.prisma.user.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        drivingLicense: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async findUserForAdmin(
+    id: string,
+  ) {
+    return this.prisma.user.findUnique({
+      where: {
+        id,
+      },
+
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        drivingLicense: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+
+        cars: {
+          orderBy: {
+            createdAt: "desc",
+          },
+
+          select: {
+            id: true,
+            make: true,
+            model: true,
+            year: true,
+            type: true,
+            city: true,
+            pricePerDay: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+
+        bookings: {
+          orderBy: {
+            createdAt: "desc",
+          },
+
+          select: {
+            id: true,
+            referenceNumber: true,
+            carId: true,
+            pickupAt: true,
+            dropOffAt: true,
+            days: true,
+            totalAmount: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+  }
+
+  async updateUserRole(
+    id: string,
+    role: UserRole,
+  ) {
+    return this.prisma.user.update({
+      where: {
+        id,
+      },
+
+      data: {
+        role,
+      },
+
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        drivingLicense: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async deactivateUser(
+  id: string,
+) {
+  return this.prisma.$transaction(
+    async (transaction) => {
+      const user =
+        await transaction.user.update({
+          where: {
+            id,
+          },
+          data: {
+            isActive: false,
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            isActive: true,
+          },
+        });
+
+      await transaction.refreshSession.updateMany(
+        {
+          where: {
+            userId: id,
+            revokedAt: null,
+          },
+          data: {
+            revokedAt: new Date(),
+          },
+        },
+      );
+
+      return user;
+    },
+  );
+}
+  // --------------------------------------------------
+  // Refresh token/session management
+  // --------------------------------------------------
+
   async createRefreshSession(data: {
     userId: string;
     tokenHash: string;
@@ -68,6 +221,7 @@ export class AuthRepository {
       where: {
         id,
       },
+
       data: {
         revokedAt: new Date(),
       },
@@ -82,6 +236,7 @@ export class AuthRepository {
         userId,
         revokedAt: null,
       },
+
       data: {
         revokedAt: new Date(),
       },
@@ -124,4 +279,33 @@ export class AuthRepository {
       },
     );
   }
-}
+  async hasActiveOrUpcomingBookings(
+  userId: string,
+): Promise<boolean> {
+  const booking =
+    await this.prisma.booking.findFirst({
+      where: {
+        OR: [
+          {
+            renterId: userId,
+            status: BookingStatus.CONFIRMED,
+            dropOffAt: {
+              gte: new Date(),
+            },
+          },
+          {
+            car: {
+              ownerId: userId,
+            },
+            status: BookingStatus.CONFIRMED,
+            dropOffAt: {
+              gte: new Date(),
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+      },
+    });
+    return Boolean(booking);}}

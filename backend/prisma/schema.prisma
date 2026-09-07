@@ -65,6 +65,7 @@ model User {
   passwordHash   String
   drivingLicense String?
   role           UserRole @default(RENTER)
+  isActive       Boolean @default(true)
 
   cars            Car[]            @relation("CarOwner")
   bookings        Booking[]        @relation("BookingRenter")
