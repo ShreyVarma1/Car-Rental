@@ -86,4 +86,40 @@ export class ReviewRepository {
       },
     });
   }
+
+  /**
+   * Average rating and review count for a specific
+   * set of cars. Used by the owner dashboard so an
+   * owner only sees ratings for their own cars.
+   */
+  async getAverageRatingsForCars(
+    carIds: string[],
+  ) {
+    if (carIds.length === 0) {
+      return [];
+    }
+
+    const grouped = await this.prisma.review.groupBy({
+      by: ["carId"],
+      where: {
+        carId: {
+          in: carIds,
+        },
+      },
+      _avg: {
+        rating: true,
+      },
+      _count: {
+        rating: true,
+      },
+    });
+
+    return grouped.map((row) => ({
+      carId: row.carId,
+      averageRating: Number(
+        (row._avg.rating ?? 0).toFixed(2),
+      ),
+      reviewCount: row._count.rating,
+    }));
+  }
 }

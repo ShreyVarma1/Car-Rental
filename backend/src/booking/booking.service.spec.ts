@@ -94,6 +94,10 @@ describe("BookingService", () => {
     createActivity: jest.fn<() => Promise<void>>(),
   };
 
+  const reviewService = {
+    getAverageRatingsForCars: jest.fn<() => Promise<any[]>>(),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -112,12 +116,15 @@ describe("BookingService", () => {
       undefined,
     );
 
+    reviewService.getAverageRatingsForCars.mockResolvedValue([]);
+
     service = new BookingService(
       bookingRepository as any,
       paymentService as any,
       configService as any,
       notificationService as any,
       activityService as any,
+      reviewService as any,
     );
 
     configService.get.mockImplementation(

@@ -1,13 +1,18 @@
 import {
+  ArrayMaxSize,
+  IsArray,
   IsEnum,
   IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   Max,
   Min,
 } from "class-validator";
+
+import { ApiPropertyOptional } from "@nestjs/swagger";
 
 import {
   CarType,
@@ -59,4 +64,15 @@ export class UpdateCarDto {
   @IsNumber()
   @Min(0.01)
   pricePerDay?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(6)
+  @IsUrl({}, { each: true })
+  @ApiPropertyOptional({
+    type: [String],
+    description: "Public image URLs for the car (max 6). Replaces the existing set of images.",
+    example: ["https://images.example.com/cars/honda-city.jpg"],
+  })
+  images?: string[];
 }

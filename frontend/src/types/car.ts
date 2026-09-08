@@ -41,6 +41,7 @@ export interface Car {
   city: string;
   pricePerDay: string | number;
   status: CarStatus;
+  images: string[];
   owner?: CarOwner;
   createdAt: string;
   updatedAt: string;

@@ -5,10 +5,18 @@ import {
   Box,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   Divider,
+  Paper,
   Rating,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
 
@@ -284,6 +292,203 @@ export default function AdminDashboardPage() {
                   </CardContent>
                 </Card>
               </Box>
+            </Box>
+
+            <Divider />
+
+            {/* Reports (revenue & utilisation breakdowns) */}
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Reports
+              </Typography>
+
+              <Stack spacing={3}>
+                {/* Revenue by Car */}
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                    Revenue by Car
+                  </Typography>
+
+                  {stats.reports.revenueByCar.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      No revenue data yet.
+                    </Typography>
+                  ) : (
+                    <TableContainer component={Paper}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 700 }}>Car</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>City</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }} align="right">
+                              Bookings
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 700 }} align="right">
+                              Revenue
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {stats.reports.revenueByCar.map((row) => (
+                            <TableRow key={row.carId} hover>
+                              <TableCell>
+                                {row.make} {row.model}
+                              </TableCell>
+                              <TableCell>{row.city}</TableCell>
+                              <TableCell align="right">{row.bookingCount}</TableCell>
+                              <TableCell align="right">
+                                ₹{row.totalRevenue.toLocaleString("en-IN")}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+                </Box>
+
+                {/* Revenue by Owner */}
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                    Revenue by Owner
+                  </Typography>
+
+                  {stats.reports.revenueByOwner.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      No revenue data yet.
+                    </Typography>
+                  ) : (
+                    <TableContainer component={Paper}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 700 }}>Owner</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }} align="right">
+                              Cars
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 700 }} align="right">
+                              Bookings
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 700 }} align="right">
+                              Revenue
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {stats.reports.revenueByOwner.map((row) => (
+                            <TableRow key={row.ownerId} hover>
+                              <TableCell>
+                                <Typography variant="body2">{row.ownerName}</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {row.ownerEmail}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="right">{row.carCount}</TableCell>
+                              <TableCell align="right">{row.bookingCount}</TableCell>
+                              <TableCell align="right">
+                                ₹{row.totalRevenue.toLocaleString("en-IN")}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+                </Box>
+
+                {/* Average Rating by Car */}
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                    Average Rating by Car
+                  </Typography>
+
+                  {stats.reports.averageRatingByCar.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      No reviews yet.
+                    </Typography>
+                  ) : (
+                    <TableContainer component={Paper}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 700 }}>Car</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Rating</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }} align="right">
+                              Reviews
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {stats.reports.averageRatingByCar.map((row) => (
+                            <TableRow key={row.carId} hover>
+                              <TableCell>
+                                {row.make} {row.model}
+                              </TableCell>
+                              <TableCell>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                  <Rating
+                                    value={row.averageRating}
+                                    readOnly
+                                    precision={0.5}
+                                    size="small"
+                                  />
+                                  <Typography variant="body2">
+                                    {row.averageRating.toFixed(1)}
+                                  </Typography>
+                                </Box>
+                              </TableCell>
+                              <TableCell align="right">{row.reviewCount}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+                </Box>
+
+                {/* Monthly Utilisation by Car */}
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                    Monthly Utilisation by Car
+                  </Typography>
+
+                  {stats.reports.monthlyUtilizationByCar.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      No booking activity yet.
+                    </Typography>
+                  ) : (
+                    <TableContainer component={Paper}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 700 }}>Car</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Month</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }} align="right">
+                              Bookings
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {stats.reports.monthlyUtilizationByCar.map((row) => (
+                            <TableRow
+                              key={`${row.carId}-${row.month}`}
+                              hover
+                            >
+                              <TableCell>
+                                {row.make} {row.model}
+                              </TableCell>
+                              <TableCell>
+                                <Chip label={row.month} size="small" />
+                              </TableCell>
+                              <TableCell align="right">{row.bookingCount}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+                </Box>
+              </Stack>
             </Box>
 
             <Divider />

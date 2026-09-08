@@ -37,6 +37,10 @@ import {
   ActivityService,
 } from "../engagement/activity/activity.service";
 
+import {
+  ReviewService,
+} from "../engagement/review/review.service";
+
 @Injectable()
 export class BookingService {
   private readonly logger =
@@ -52,6 +56,8 @@ export class BookingService {
     private readonly notificationService: NotificationService,
 
     private readonly activityService: ActivityService,
+
+    private readonly reviewService: ReviewService,
   ) {}
 
   async createBooking(
@@ -434,6 +440,139 @@ export class BookingService {
       .findOwnerBookings(
         ownerId,
       );
+  }
+
+  /**
+   * PDF spec (section 11): owners should be able to see
+   * how their own fleet is performing — revenue and
+   * utilisation per car, plus average rating per car.
+   */
+  async getOwnerDashboard(
+    ownerId: string,
+  ) {
+    const bookings =
+      await this.bookingRepository
+        .findOwnerBookingsForDashboard(
+          ownerId,
+        );
+
+    const byCar = new Map<
+      string,
+      {
+        carId: string;
+        make: string;
+        model: string;
+        totalRevenue: number;
+        bookingCount: number;
+      }
+    >();
+
+    const byCarMonth = new Map<
+      string,
+      {
+        carId: string;
+        make: string;
+        model: string;
+        month: string;
+        bookingCount: number;
+      }
+    >();
+
+    let totalRevenue = 0;
+
+    for (const booking of bookings) {
+      const amount =
+        booking.totalAmount.toNumber();
+
+      totalRevenue += amount;
+
+      const existingCar =
+        byCar.get(booking.carId);
+
+      if (existingCar) {
+        existingCar.totalRevenue +=
+          amount;
+        existingCar.bookingCount += 1;
+      } else {
+        byCar.set(booking.carId, {
+          carId: booking.carId,
+          make: booking.car.make,
+          model: booking.car.model,
+          totalRevenue: amount,
+          bookingCount: 1,
+        });
+      }
+
+      const month =
+        booking.pickupAt
+          .toISOString()
+          .slice(0, 7);
+
+      const monthKey = `${booking.carId}:${month}`;
+
+      const existingMonth =
+        byCarMonth.get(monthKey);
+
+      if (existingMonth) {
+        existingMonth.bookingCount += 1;
+      } else {
+        byCarMonth.set(monthKey, {
+          carId: booking.carId,
+          make: booking.car.make,
+          model: booking.car.model,
+          month,
+          bookingCount: 1,
+        });
+      }
+    }
+
+    const carIds = [...byCar.keys()];
+
+    const ratings =
+      await this.reviewService
+        .getAverageRatingsForCars(
+          carIds,
+        );
+
+    const ratingsByCarId = new Map(
+      ratings.map((rating) => [
+        rating.carId,
+        rating,
+      ]),
+    );
+
+    const revenueByCar = [...byCar.values()]
+      .sort(
+        (a, b) =>
+          b.totalRevenue -
+          a.totalRevenue,
+      )
+      .map((car) => ({
+        ...car,
+        averageRating:
+          ratingsByCarId.get(car.carId)
+            ?.averageRating ?? null,
+        reviewCount:
+          ratingsByCarId.get(car.carId)
+            ?.reviewCount ?? 0,
+      }));
+
+    const monthlyUtilization = [
+      ...byCarMonth.values(),
+    ].sort((a, b) =>
+      a.month === b.month
+        ? a.make.localeCompare(b.make)
+        : a.month.localeCompare(
+            b.month,
+          ),
+    );
+
+    return {
+      totalRevenue,
+      totalBookings: bookings.length,
+      revenueByCar,
+      monthlyUtilization,
+    };
   }
 
   async getOwnerBooking(

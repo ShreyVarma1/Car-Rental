@@ -32,3 +32,8 @@ Thumbs.db
 # Prisma
 *.db
 *.db-journal
+
+# Archives
+*.zip
+*.tar.gz
+*.rar

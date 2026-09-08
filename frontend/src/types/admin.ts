@@ -36,6 +36,39 @@ export interface AdminDashboard {
     averageRating: number;
     cancellationRate: number;
   };
+  reports: {
+    revenueByCar: {
+      carId: string;
+      make: string;
+      model: string;
+      city: string;
+      ownerId: string;
+      totalRevenue: number;
+      bookingCount: number;
+    }[];
+    revenueByOwner: {
+      ownerId: string;
+      ownerName: string;
+      ownerEmail: string;
+      totalRevenue: number;
+      bookingCount: number;
+      carCount: number;
+    }[];
+    monthlyUtilizationByCar: {
+      carId: string;
+      make: string;
+      model: string;
+      month: string;
+      bookingCount: number;
+    }[];
+    averageRatingByCar: {
+      carId: string;
+      make: string;
+      model: string;
+      averageRating: number;
+      reviewCount: number;
+    }[];
+  };
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -75,5 +108,28 @@ export interface AdminUserDetail extends AdminUser {
     totalAmount: string | number;
     status: string;
     createdAt: string;
+  }[];
+}
+
+// ─── Owner Dashboard ────────────────────────────────────────────────────────────
+
+export interface OwnerDashboard {
+  totalRevenue: number;
+  totalBookings: number;
+  revenueByCar: {
+    carId: string;
+    make: string;
+    model: string;
+    totalRevenue: number;
+    bookingCount: number;
+    averageRating: number | null;
+    reviewCount: number;
+  }[];
+  monthlyUtilization: {
+    carId: string;
+    make: string;
+    model: string;
+    month: string;
+    bookingCount: number;
   }[];
 }

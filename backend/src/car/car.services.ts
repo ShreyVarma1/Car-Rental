@@ -65,6 +65,9 @@ export class CarService {
         pricePerDay:
           dto.pricePerDay!,
 
+        images:
+          dto.images ?? [],
+
         status:
           CarStatus.PENDING,
 
@@ -187,6 +190,16 @@ export class CarService {
     ) {
       data.pricePerDay =
         dto.pricePerDay;
+    }
+
+    if (
+      dto.images !== undefined
+    ) {
+      /*
+       * The images array is always replaced
+       * as a whole, not merged.
+       */
+      data.images = dto.images;
     }
 
     /*

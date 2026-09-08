@@ -23,6 +23,10 @@ import {
 } from "./booking.repository";
 
 import {
+  BookingCompletionService,
+} from "./booking-completion.service";
+
+import {
   PaymentService,
 } from "./payment/payment.services";
 
@@ -51,6 +55,8 @@ import {
     BookingService,
 
     BookingRepository,
+
+    BookingCompletionService,
 
     PaymentService,
 

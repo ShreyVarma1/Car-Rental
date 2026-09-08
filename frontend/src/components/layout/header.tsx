@@ -41,6 +41,9 @@ function NavLinks({ role }: { role: string }) {
   if (role === "OWNER") {
     return (
       <>
+        <Button color="inherit" component={Link} href="/owner/dashboard">
+          Dashboard
+        </Button>
         <Button color="inherit" component={Link} href="/owner/cars">
           My Cars
         </Button>

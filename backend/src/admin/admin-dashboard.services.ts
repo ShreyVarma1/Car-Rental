@@ -21,6 +21,10 @@ export class AdminDashboardService {
       mostBookedCar,
       mostBookedCarType,
       averageRating,
+      revenueByCar,
+      revenueByOwner,
+      monthlyUtilizationByCar,
+      averageRatingByCar,
     ] = await Promise.all([
       this.dashboardRepository
         .getUserStatistics(),
@@ -42,6 +46,18 @@ export class AdminDashboardService {
 
       this.dashboardRepository
         .getAverageRating(),
+
+      this.dashboardRepository
+        .getRevenueByCar(),
+
+      this.dashboardRepository
+        .getRevenueByOwner(),
+
+      this.dashboardRepository
+        .getMonthlyUtilizationByCar(),
+
+      this.dashboardRepository
+        .getAverageRatingByCar(),
     ]);
 
     const totalBookings =
@@ -76,6 +92,18 @@ export class AdminDashboardService {
           Number(
             cancellationRate.toFixed(2),
           ),
+      },
+
+      /*
+       * PDF spec (section 11): bookings per car per
+       * month, revenue per car and per owner, and
+       * average rating per car.
+       */
+      reports: {
+        revenueByCar,
+        revenueByOwner,
+        monthlyUtilizationByCar,
+        averageRatingByCar,
       },
     };
   }

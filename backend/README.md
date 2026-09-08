@@ -109,6 +109,12 @@ All routes are prefixed with `/api`.
 | Admin — Dashboard | `/api/admin/dashboard` | Bearer + ADMIN |
 | Health | `/api/health` | Public |
 
+## Scheduled Jobs
+
+| Job | Schedule | Purpose |
+|---|---|---|
+| Booking completion | Every minute (`@nestjs/schedule`) | Transitions any `CONFIRMED` booking whose `dropOffAt` has passed into `COMPLETED`. This is what unlocks reviews (only allowed on completed bookings) and feeds completed-booking metrics on the admin dashboard. Implemented in `src/booking/booking-completion.service.ts`. |
+
 ---
 
 ## User Roles

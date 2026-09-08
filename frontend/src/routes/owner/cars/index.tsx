@@ -8,6 +8,8 @@ import { FormEvent, useState } from "react";
 
 import ProtectedRoute from "@/components/auth/protected_route";
 
+import CarImage from "@/components/cars/car_image";
+
 import {
   useOwnerCars,
   useCreateCar,
@@ -36,6 +38,7 @@ interface CarFormData {
   seats: string;
   city: string;
   pricePerDay: string;
+  images: string;
 }
 
 const defaultForm: CarFormData = {
@@ -48,6 +51,7 @@ const defaultForm: CarFormData = {
   seats: "",
   city: "",
   pricePerDay: "",
+  images: "",
 };
 
 function carToForm(car: Car): CarFormData {
@@ -61,7 +65,16 @@ function carToForm(car: Car): CarFormData {
     seats: String(car.seats),
     city: car.city,
     pricePerDay: String(car.pricePerDay),
+    images: (car.images ?? []).join("\n"),
   };
+}
+
+function parseImagesField(raw: string): string[] {
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 6);
 }
 
 const CAR_TYPES = [
@@ -185,6 +198,31 @@ function CarFormFields({
         required
         fullWidth
       />
+
+      <TextField
+        label="Image URLs (one per line, up to 6)"
+        value={form.images}
+        onChange={(e) => onChange("images", e.target.value)}
+        placeholder="https://example.com/car-photo-1.jpg"
+        multiline
+        minRows={3}
+        fullWidth
+      />
+
+      {parseImagesField(form.images).length > 0 && (
+        <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
+          {parseImagesField(form.images).map((src, index) => (
+            <Box key={src + index} sx={{ width: 80, flexShrink: 0 }}>
+              <CarImage
+                src={src}
+                alt={`Preview ${index + 1}`}
+                height={60}
+                borderRadius={1}
+              />
+            </Box>
+          ))}
+        </Box>
+      )}
     </Stack>
   );
 }
@@ -232,6 +270,7 @@ export default function OwnerCarsPage() {
       seats: Number(form.seats),
       city: form.city,
       pricePerDay: Number(form.pricePerDay),
+      images: parseImagesField(form.images),
     };
   }
 
@@ -333,6 +372,12 @@ export default function OwnerCarsPage() {
         >
           {cars?.map((car) => (
             <Card key={car.id}>
+              <CarImage
+                src={car.images?.[0]}
+                alt={`${car.make} ${car.model}`}
+                height={140}
+              />
+
               <CardContent>
                 <Stack spacing={1.5}>
                   <Box

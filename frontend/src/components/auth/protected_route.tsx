@@ -8,6 +8,7 @@ import {
 import {
   ReactNode,
   useEffect,
+  useState, // Added useState
 } from "react";
 
 import { useRouter } from "next/navigation";
@@ -32,14 +33,21 @@ export default function ProtectedRoute({
     isAuthenticated,
   } = useAuth();
 
+  // 1. Add state to ensure we only render layout dependencies on the client
+  const [isMounted, setIsMounted] = useState(false);
+
   useEffect(() => {
-    if (isLoading) {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Wait until mounted and loading finishes before processing redirect hooks
+    if (!isMounted || isLoading) {
       return;
     }
 
     if (!isAuthenticated) {
       router.replace("/login");
-
       return;
     }
 
@@ -51,6 +59,7 @@ export default function ProtectedRoute({
       router.replace("/dashboard");
     }
   }, [
+    isMounted, // Added isMounted dependency
     isLoading,
     isAuthenticated,
     user,
@@ -58,6 +67,12 @@ export default function ProtectedRoute({
     router,
   ]);
 
+  // 2. Return an empty layout on server pre-rendering to match baseline client HTML structural rules
+  if (!isMounted) {
+    return null;
+  }
+
+  // Now client-only conditional nodes are clean and safe!
   if (isLoading) {
     return (
       <Box

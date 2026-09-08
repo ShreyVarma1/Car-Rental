@@ -116,6 +116,61 @@ export class OwnerBookingController {
       .getOwnerBookings(user.sub);
   }
 
+  @Get("dashboard")
+  @ApiOperation({
+    summary:
+      "Get the owner's revenue and utilisation dashboard",
+    description:
+      "Returns total revenue, per-car revenue, per-car average rating and per-car-per-month booking utilisation for cars owned by the authenticated owner.",
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      "Owner dashboard returned successfully.",
+    example: {
+      totalRevenue: 24600,
+      totalBookings: 4,
+      revenueByCar: [
+        {
+          carId:
+            "550e8400-e29b-41d4-a716-446655440001",
+          make: "Toyota",
+          model: "Fortuner",
+          totalRevenue: 19824,
+          bookingCount: 2,
+          averageRating: 4.5,
+          reviewCount: 2,
+        },
+      ],
+      monthlyUtilization: [
+        {
+          carId:
+            "550e8400-e29b-41d4-a716-446655440001",
+          make: "Toyota",
+          model: "Fortuner",
+          month: "2030-01",
+          bookingCount: 2,
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description:
+      "Authentication is required.",
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      "Only users with the OWNER role can access this endpoint.",
+  })
+  getOwnerDashboard(
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.bookingService
+      .getOwnerDashboard(user.sub);
+  }
+
   @Get(":id")
   @ApiOperation({
     summary:

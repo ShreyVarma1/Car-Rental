@@ -14,6 +14,8 @@ import {
   Car,
 } from "@/types/car";
 
+import CarImage from "@/components/cars/car_image";
+
 interface CarCardProps {
   car: Car;
 }
@@ -27,6 +29,12 @@ export default function CarCard({
         height: "100%",
       }}
     >
+      <CarImage
+        src={car.images?.[0]}
+        alt={`${car.make} ${car.model}`}
+        height={160}
+      />
+
       <CardContent>
         <Stack spacing={1.5}>
           <Typography

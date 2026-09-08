@@ -157,4 +157,13 @@ export class ReviewService {
         carId,
       );
   }
+
+  async getAverageRatingsForCars(
+    carIds: string[],
+  ) {
+    return this.reviewRepository
+      .getAverageRatingsForCars(
+        carIds,
+      );
+  }
 }

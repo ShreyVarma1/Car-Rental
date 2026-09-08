@@ -19,6 +19,8 @@ import {
 
 import ProtectedRoute from "@/components/auth/protected_route";
 
+import CarImage from "@/components/cars/car_image";
+
 import {
   useAdminCars,
   useApproveAdminCar,
@@ -79,12 +81,25 @@ export default function AdminCarsPage() {
                 {cars.map((car) => (
                   <TableRow key={car.id} hover>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {car.make} {car.model}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {car.year} • {car.type} • {car.transmission}
-                      </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Box sx={{ width: 56, flexShrink: 0 }}>
+                          <CarImage
+                            src={car.images?.[0]}
+                            alt={`${car.make} ${car.model}`}
+                            height={40}
+                            borderRadius={1}
+                          />
+                        </Box>
+
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {car.make} {car.model}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {car.year} • {car.type} • {car.transmission}
+                          </Typography>
+                        </Box>
+                      </Box>
                     </TableCell>
 
                     <TableCell>

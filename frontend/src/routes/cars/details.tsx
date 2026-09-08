@@ -17,10 +17,59 @@ import {
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 
 import { useCar } from "@/hooks/use_cars";
 import { useCarReviews } from "@/hooks/use_reviews";
 import { useAuth } from "@/hooks/use_auth";
+
+import CarImage from "@/components/cars/car_image";
+
+function CarGallery({
+  images,
+  alt,
+}: {
+  images: string[];
+  alt: string;
+}) {
+  const [selected, setSelected] = useState(0);
+
+  const activeSrc = images[selected];
+
+  return (
+    <Stack spacing={1}>
+      <CarImage
+        src={activeSrc}
+        alt={alt}
+        height={320}
+        borderRadius={2}
+      />
+
+      {images.length > 1 && (
+        <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
+          {images.map((src, index) => (
+            <Box
+              key={src + index}
+              onClick={() => setSelected(index)}
+              sx={{
+                width: 88,
+                flexShrink: 0,
+                cursor: "pointer",
+                opacity: index === selected ? 1 : 0.6,
+                border: index === selected ? "2px solid" : "2px solid transparent",
+                borderColor:
+                  index === selected ? "primary.main" : "transparent",
+                borderRadius: 1,
+              }}
+            >
+              <CarImage src={src} alt={`${alt} thumbnail ${index + 1}`} height={64} borderRadius={1} />
+            </Box>
+          ))}
+        </Box>
+      )}
+    </Stack>
+  );
+}
 
 export default function CarDetailsPage() {
   const params = useParams();
@@ -61,6 +110,13 @@ export default function CarDetailsPage() {
         <Button component={Link} href="/cars" variant="text" size="small">
           ← Back to Cars
         </Button>
+      </Box>
+
+      <Box sx={{ mb: 3 }}>
+        <CarGallery
+          images={car.images ?? []}
+          alt={`${car.make} ${car.model}`}
+        />
       </Box>
 
       <Stack spacing={4}>

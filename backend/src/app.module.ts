@@ -1,5 +1,6 @@
 import {Module,} from "@nestjs/common";
 import {ConfigModule,} from "@nestjs/config";
+import {ScheduleModule,} from "@nestjs/schedule";
 import * as Joi from "joi";
 import {PrismaModule,} from "./prisma/prisma_module";
 import {HealthModule,} from "./health/health.module";
@@ -62,6 +63,8 @@ import {AdminModule,} from "./admin/admin.module";
             .required(),
       }),
     }),
+
+    ScheduleModule.forRoot(),
 
     PrismaModule,
     HealthModule,

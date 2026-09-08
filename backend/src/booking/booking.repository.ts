@@ -385,4 +385,95 @@ async cancelBookingByAdmin(
       status: BookingStatus.CANCELLED,
     },
   });
+}
+
+/**
+ * Finds every CONFIRMED booking whose drop-off
+ * time has already passed. These are candidates
+ * to be marked COMPLETED by the scheduled job.
+ */
+async findBookingsPendingCompletion() {
+  return this.prisma.booking.findMany({
+    where: {
+      status: BookingStatus.CONFIRMED,
+
+      dropOffAt: {
+        lte: new Date(),
+      },
+    },
+
+    select: {
+      id: true,
+      referenceNumber: true,
+      renterId: true,
+
+      car: {
+        select: {
+          ownerId: true,
+          make: true,
+          model: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Bulk-transitions a batch of bookings to
+ * COMPLETED. Re-checks status = CONFIRMED so a
+ * booking cancelled between the read and this
+ * write is never overwritten.
+ */
+async markBookingsCompleted(
+  ids: string[],
+) {
+  return this.prisma.booking.updateMany({
+    where: {
+      id: {
+        in: ids,
+      },
+
+      status: BookingStatus.CONFIRMED,
+    },
+
+    data: {
+      status: BookingStatus.COMPLETED,
+    },
+  });
+}
+
+/**
+ * All revenue-bearing bookings for cars owned by a
+ * given owner. Used to build the owner dashboard
+ * (revenue and utilisation per car).
+ */
+async findOwnerBookingsForDashboard(
+  ownerId: string,
+) {
+  return this.prisma.booking.findMany({
+    where: {
+      car: {
+        ownerId,
+      },
+      status: {
+        in: [
+          BookingStatus.CONFIRMED,
+          BookingStatus.COMPLETED,
+        ],
+      },
+    },
+
+    select: {
+      carId: true,
+      totalAmount: true,
+      pickupAt: true,
+
+      car: {
+        select: {
+          make: true,
+          model: true,
+        },
+      },
+    },
+  });
 }}
