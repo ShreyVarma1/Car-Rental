@@ -3,7 +3,7 @@
 import { Alert, Box, Button, Card, CardContent, Checkbox, CircularProgress, 
 Divider, FormControlLabel, Stack, TextField, Typography,} from "@mui/material";
 
-import { FormEvent, useState, useMemo } from "react";
+import { FormEvent, useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import ProtectedRoute from "@/components/auth/protected_route";
@@ -40,6 +40,20 @@ export default function NewBookingPage() {
 
   // Local error state — this is fine as useState since it's ephemeral UI feedback
   const [error, setError] = useState("");
+
+  /*
+   * If the user navigates to this page for a DIFFERENT car than the one
+   * stored in the booking store (e.g. they bookmarked a URL or browsed
+   * from a different car detail page), clear the store so stale dates
+   * and add-on selections from a previous car session don't carry over.
+   */
+  useEffect(() => {
+    const storedCarId = useBookingStore.getState().carId;
+    if (carId && storedCarId && storedCarId !== carId) {
+      reset();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carId]);
 
   const days = useMemo(() => {
     if (!pickupAt || !dropOffAt) return 0;

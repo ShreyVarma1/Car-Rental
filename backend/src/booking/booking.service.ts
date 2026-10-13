@@ -181,21 +181,6 @@ export class BookingService {
         taxRate,
       });
 
-    /*
-     * Payment uses the server-calculated amount.
-     */
-    const payment =
-      await this.paymentService
-        .processPayment(
-          pricing.totalAmount.toNumber(),
-        );
-
-    if (!payment.success) {
-      throw new ConflictException(
-        "Payment failed",
-      );
-    }
-
     const referenceNumber =
       generateBookingReference();
 
@@ -256,9 +241,10 @@ export class BookingService {
     };
 
     /*
-     * The availability check is performed again
-     * inside a transaction protected by a
-     * car-specific PostgreSQL advisory lock.
+     * Availability check is performed inside a transaction protected
+     * by a car-specific PostgreSQL advisory lock BEFORE payment is
+     * charged. This prevents charging the user for a car that is no
+     * longer available due to a concurrent booking.
      */
     const booking =
       await this.bookingRepository
@@ -270,14 +256,28 @@ export class BookingService {
         );
 
     if (!booking) {
-      /*
-       * A real payment provider would be refunded here.
-       *
-       * The current mock provider has no real
-       * financial side effect.
-       */
       throw new ConflictException(
         "Car is no longer available for the selected dates",
+      );
+    }
+
+    /*
+     * Car is confirmed available and the booking row is committed.
+     * Now charge the user — if payment fails, the booking is already
+     * in the DB as CONFIRMED. In production you would either:
+     *   a) Cancel the booking immediately on payment failure, or
+     *   b) Use a two-phase flow (reserve → capture).
+     * For the mock provider there is no real financial side effect.
+     */
+    const payment =
+      await this.paymentService
+        .processPayment(
+          pricing.totalAmount.toNumber(),
+        );
+
+    if (!payment.success) {
+      throw new ConflictException(
+        "Payment failed",
       );
     }
 

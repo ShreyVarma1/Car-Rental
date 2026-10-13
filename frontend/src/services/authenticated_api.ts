@@ -38,24 +38,22 @@ export async function authenticatedRequest<T>(
   };
 
   try {
-    return await makeRequest(
-      accessToken,
-    );
+    return await makeRequest(accessToken);
   } catch (error) {
     if (
-      !(
-        error instanceof ApiError
-      ) ||
+      !(error instanceof ApiError) ||
       error.statusCode !== 401
     ) {
       throw error;
     }
 
-    const newAccessToken =
-      await refreshAccessToken();
-
-    return makeRequest(
-      newAccessToken,
-    );
+    /*
+     * Token expired — refresh once and retry.
+     * If the refresh itself fails (expired/revoked refresh token),
+     * refreshAccessToken() will throw and we propagate that error
+     * directly without another retry, preventing an infinite loop.
+     */
+    const newAccessToken = await refreshAccessToken();
+    return makeRequest(newAccessToken);
   }
 }

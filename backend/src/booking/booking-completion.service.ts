@@ -46,6 +46,18 @@ export class BookingCompletionService {
       `Marked ${result.count} booking(s) as COMPLETED`,
     );
 
+    /*
+     * Guard: only send side-effect notifications for bookings that were
+     * actually transitioned in this run. If the cron overlaps with a
+     * previous slow invocation, markBookingsCompleted re-checks
+     * status = CONFIRMED before updating, so result.count reflects
+     * the real number of rows changed. Skipping side effects when
+     * count === 0 prevents duplicate "Rental completed" notifications.
+     */
+    if (result.count === 0) {
+      return;
+    }
+
     await Promise.all(
       pendingBookings.map((booking) =>
         this.handleBookingCompletedSideEffects(booking),
