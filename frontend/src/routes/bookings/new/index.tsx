@@ -1,19 +1,7 @@
 "use client";
 
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Checkbox,
-  CircularProgress,
-  Divider,
-  FormControlLabel,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Checkbox, CircularProgress, 
+Divider, FormControlLabel, Stack, TextField, Typography,} from "@mui/material";
 
 import { FormEvent, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -23,6 +11,8 @@ import ProtectedRoute from "@/components/auth/protected_route";
 import { useCar } from "@/hooks/use_cars";
 import { useAddOns } from "@/hooks/use_addons";
 import { useCreateBooking } from "@/hooks/use_bookings";
+
+import { useBookingStore } from "@/stores/booking_store";
 
 import { ApiError } from "@/services/api";
 
@@ -37,9 +27,18 @@ export default function NewBookingPage() {
 
   const createBooking = useCreateBooking();
 
-  const [pickupAt, setPickupAt] = useState("");
-  const [dropOffAt, setDropOffAt] = useState("");
-  const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([]);
+  // Zustand: pickup/dropoff dates and selected add-ons persist if the user
+  // navigates away and comes back (e.g. checks car details then returns)
+  const {
+    pickupAt,
+    dropOffAt,
+    selectedAddOnIds,
+    setDates,
+    toggleAddOn,
+    reset,
+  } = useBookingStore();
+
+  // Local error state — this is fine as useState since it's ephemeral UI feedback
   const [error, setError] = useState("");
 
   const days = useMemo(() => {
@@ -64,14 +63,6 @@ export default function NewBookingPage() {
   const tax = useMemo(() => subtotal * 0.18, [subtotal]);
   const total = useMemo(() => subtotal + tax, [subtotal, tax]);
 
-  function toggleAddOn(id: string) {
-    setSelectedAddOnIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id],
-    );
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -88,6 +79,9 @@ export default function NewBookingPage() {
         dropOffAt: new Date(dropOffAt).toISOString(),
         addOnIds: selectedAddOnIds,
       });
+
+      // Clean the store after a successful booking
+      reset();
 
       router.replace(`/bookings/${result.booking.id}`);
     } catch (err) {
@@ -160,7 +154,9 @@ export default function NewBookingPage() {
                 label="Pickup Date & Time"
                 type="datetime-local"
                 value={pickupAt}
-                onChange={(e) => setPickupAt(e.target.value)}
+                onChange={(e) =>
+                  setDates(carId, e.target.value, dropOffAt)
+                }
                 slotProps={{ inputLabel: { shrink: true } }}
                 required
                 fullWidth
@@ -170,7 +166,9 @@ export default function NewBookingPage() {
                 label="Drop-off Date & Time"
                 type="datetime-local"
                 value={dropOffAt}
-                onChange={(e) => setDropOffAt(e.target.value)}
+                onChange={(e) =>
+                  setDates(carId, pickupAt, e.target.value)
+                }
                 slotProps={{ inputLabel: { shrink: true } }}
                 required
                 fullWidth
@@ -215,9 +213,9 @@ export default function NewBookingPage() {
                         {days} day{days !== 1 ? "s" : ""} × ₹
                         {Number(car.pricePerDay).toLocaleString("en-IN")} ={" "}
                         ₹
-                        {(
-                          Number(car.pricePerDay) * days
-                        ).toLocaleString("en-IN")}
+                        {(Number(car.pricePerDay) * days).toLocaleString(
+                          "en-IN",
+                        )}
                       </Typography>
 
                       {addOnsTotal > 0 && (

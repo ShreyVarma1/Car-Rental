@@ -21,7 +21,7 @@ import {
 import { UserRole } from "../../generated/prisma/client";
 
 import { BookingService } from "./booking.service";
-import type { CreateBookingDto } from "./dto/create-booking.dto";
+import { CreateBookingDto } from "./dto/create-booking.dto";
 
 import { JwtAuthGuard } from "../auth/guards/auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";

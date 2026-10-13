@@ -1,13 +1,29 @@
 "use client";
 
-import {Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog,
-  DialogActions,DialogContent, DialogTitle, FormControl,InputLabel, 
-  MenuItem, Select, Stack, TextField, Typography,} from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 
-import { FormEvent, useState } from "react";
+import { FormEvent } from "react";
 
 import ProtectedRoute from "@/components/auth/protected_route";
-
 import CarImage from "@/components/cars/car_image";
 
 import {
@@ -16,6 +32,11 @@ import {
   useUpdateCar,
   useDeleteCar,
 } from "@/hooks/use_owner_cars";
+
+import {
+  useOwnerCarStore,
+  CarFormData,
+} from "@/stores/owner_car_store";
 
 import { Car, CarStatus } from "@/types/car";
 import { ApiError } from "@/services/api";
@@ -26,47 +47,6 @@ function statusColor(
   if (status === "APPROVED") return "success";
   if (status === "PENDING") return "warning";
   return "error";
-}
-
-interface CarFormData {
-  make: string;
-  model: string;
-  year: string;
-  type: string;
-  transmission: string;
-  fuel: string;
-  seats: string;
-  city: string;
-  pricePerDay: string;
-  images: string;
-}
-
-const defaultForm: CarFormData = {
-  make: "",
-  model: "",
-  year: "",
-  type: "",
-  transmission: "",
-  fuel: "",
-  seats: "",
-  city: "",
-  pricePerDay: "",
-  images: "",
-};
-
-function carToForm(car: Car): CarFormData {
-  return {
-    make: car.make,
-    model: car.model,
-    year: String(car.year),
-    type: car.type,
-    transmission: car.transmission,
-    fuel: car.fuel,
-    seats: String(car.seats),
-    city: car.city,
-    pricePerDay: String(car.pricePerDay),
-    images: (car.images ?? []).join("\n"),
-  };
 }
 
 function parseImagesField(raw: string): string[] {
@@ -235,29 +215,24 @@ export default function OwnerCarsPage() {
   const updateCar = useUpdateCar();
   const deleteCar = useDeleteCar();
 
-  // Create dialog
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState<CarFormData>(defaultForm);
-  const [createError, setCreateError] = useState("");
+  // Zustand: all dialog state lives in the store — keeps this component lean
+  const {
+    createOpen,
+    createForm,
+    createError,
+    openCreateDialog,
+    closeCreateDialog,
+    setCreateField,
+    setCreateError,
 
-  // Edit dialog
-  const [editCar, setEditCar] = useState<Car | null>(null);
-  const [editForm, setEditForm] = useState<CarFormData>(defaultForm);
-  const [editError, setEditError] = useState("");
-
-  function handleCreateField(field: keyof CarFormData, value: string) {
-    setCreateForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function handleEditField(field: keyof CarFormData, value: string) {
-    setEditForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function openEdit(car: Car) {
-    setEditCar(car);
-    setEditForm(carToForm(car));
-    setEditError("");
-  }
+    editCar,
+    editForm,
+    editError,
+    openEditDialog,
+    closeEditDialog,
+    setEditField,
+    setEditError,
+  } = useOwnerCarStore();
 
   function buildPayload(form: CarFormData) {
     return {
@@ -280,8 +255,7 @@ export default function OwnerCarsPage() {
 
     try {
       await createCar.mutateAsync(buildPayload(createForm));
-      setCreateOpen(false);
-      setCreateForm(defaultForm);
+      closeCreateDialog();
     } catch (err) {
       setCreateError(
         err instanceof ApiError
@@ -302,7 +276,7 @@ export default function OwnerCarsPage() {
         id: editCar.id,
         data: buildPayload(editForm),
       });
-      setEditCar(null);
+      closeEditDialog();
     } catch (err) {
       setEditError(
         err instanceof ApiError
@@ -334,7 +308,7 @@ export default function OwnerCarsPage() {
             My Car Listings
           </Typography>
 
-          <Button variant="contained" onClick={() => setCreateOpen(true)}>
+          <Button variant="contained" onClick={openCreateDialog}>
             + Add Car
           </Button>
         </Box>
@@ -347,9 +321,7 @@ export default function OwnerCarsPage() {
 
         {isError && (
           <Alert severity="error">
-            {error instanceof ApiError
-              ? error.message
-              : "Unable to load cars."}
+            {error instanceof ApiError ? error.message : "Unable to load cars."}
           </Alert>
         )}
 
@@ -428,7 +400,7 @@ export default function OwnerCarsPage() {
                     <Button
                       variant="outlined"
                       size="small"
-                      onClick={() => openEdit(car)}
+                      onClick={() => openEditDialog(car)}
                       fullWidth
                     >
                       Edit
@@ -454,7 +426,7 @@ export default function OwnerCarsPage() {
         {/* ── Create Dialog ── */}
         <Dialog
           open={createOpen}
-          onClose={() => setCreateOpen(false)}
+          onClose={closeCreateDialog}
           maxWidth="sm"
           fullWidth
         >
@@ -468,14 +440,11 @@ export default function OwnerCarsPage() {
                 </Alert>
               )}
 
-              <CarFormFields
-                form={createForm}
-                onChange={handleCreateField}
-              />
+              <CarFormFields form={createForm} onChange={setCreateField} />
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2 }}>
-              <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
+              <Button onClick={closeCreateDialog}>Cancel</Button>
 
               <Button
                 type="submit"
@@ -491,7 +460,7 @@ export default function OwnerCarsPage() {
         {/* ── Edit Dialog ── */}
         <Dialog
           open={Boolean(editCar)}
-          onClose={() => setEditCar(null)}
+          onClose={closeEditDialog}
           maxWidth="sm"
           fullWidth
         >
@@ -512,14 +481,11 @@ export default function OwnerCarsPage() {
                 admin re-approval.
               </Alert>
 
-              <CarFormFields
-                form={editForm}
-                onChange={handleEditField}
-              />
+              <CarFormFields form={editForm} onChange={setEditField} />
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2 }}>
-              <Button onClick={() => setEditCar(null)}>Cancel</Button>
+              <Button onClick={closeEditDialog}>Cancel</Button>
 
               <Button
                 type="submit"

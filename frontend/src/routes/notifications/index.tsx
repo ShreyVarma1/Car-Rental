@@ -1,23 +1,18 @@
 "use client";
 
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Stack, Typography,} from "@mui/material";
 
 import ProtectedRoute from "@/components/auth/protected_route";
+
+import { useEffect } from "react";
 
 import {
   useNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
 } from "@/hooks/use_notifications";
+
+import { useNotificationStore } from "@/stores/notification_store";
 
 import { Notification } from "@/types/notification";
 import { ApiError } from "@/services/api";
@@ -28,6 +23,8 @@ function NotificationItem({
   notification: Notification;
 }) {
   const markRead = useMarkNotificationRead();
+  // Zustand: optimistically decrement the badge in the Header instantly
+  const decrement = useNotificationStore((s) => s.decrement);
 
   return (
     <Card
@@ -70,7 +67,10 @@ function NotificationItem({
             <Button
               size="small"
               variant="outlined"
-              onClick={() => markRead.mutate(notification.id)}
+              onClick={() => {
+                markRead.mutate(notification.id);
+                decrement(); // immediately update the Header badge
+              }}
               disabled={markRead.isPending}
             >
               Mark read
@@ -92,8 +92,20 @@ export default function NotificationsPage() {
 
   const markAll = useMarkAllNotificationsRead();
 
+  // Zustand: sync unread count into the store whenever data changes
+  const setUnreadCount = useNotificationStore((s) => s.setUnreadCount);
+  const resetCount = useNotificationStore((s) => s.reset);
+
   const unreadCount =
     notifications?.filter((n) => !n.isRead).length ?? 0;
+
+  // Zustand: sync into the store AFTER render, not during — avoids the
+  // "setState during render of another component" warning
+  useEffect(() => {
+    if (notifications) {
+      setUnreadCount(unreadCount);
+    }
+  }, [unreadCount, notifications, setUnreadCount]);
 
   return (
     <ProtectedRoute>
@@ -123,7 +135,10 @@ export default function NotificationsPage() {
           {unreadCount > 0 && (
             <Button
               variant="outlined"
-              onClick={() => markAll.mutate()}
+              onClick={() => {
+                markAll.mutate();
+                resetCount(); // immediately clear the badge
+              }}
               disabled={markAll.isPending}
             >
               Mark all as read

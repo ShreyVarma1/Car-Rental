@@ -5,13 +5,9 @@ import {
   Typography,
 } from "@mui/material";
 
-import {
-  useState,
-} from "react";
+import { useCarFilterStore } from "@/stores/car_filter_store";
 
-import {
-  SearchCarsParams,
-} from "@/types/car";
+import { SearchCarsParams } from "@/types/car";
 
 import {
   useCars,
@@ -21,13 +17,8 @@ import CarSearchForm from "../../components/cars/car_search_form";
 import CarList from "../../components/cars/car_list";
 
 export default function CarsPage() {
-  const [filters, setFilters] =
-    useState<SearchCarsParams>({
-      page: 1,
-      limit: 10,
-      sortBy: "createdAt",
-      sortOrder: "desc",
-    });
+  // Zustand: filters survive navigation back from /cars/[id]
+  const { filters, setFilters, setPage } = useCarFilterStore();
 
   const {
     data,
@@ -39,20 +30,13 @@ export default function CarsPage() {
   function handleSearch(
     values: SearchCarsParams,
   ) {
-    setFilters({
-      ...values,
-      page: 1,
-      limit: 10,
-    });
+    setFilters(values);
   }
 
   function handlePageChange(
     page: number,
   ) {
-    setFilters((current) => ({
-      ...current,
-      page,
-    }));
+    setPage(page);
   }
 
   return (

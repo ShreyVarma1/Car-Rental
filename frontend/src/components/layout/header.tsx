@@ -1,18 +1,7 @@
 "use client";
 
-import {
-  AppBar,
-  Badge,
-  Box,
-  Button,
-  Divider,
-  IconButton,
-  Menu,
-  MenuItem,
-  Toolbar,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { AppBar, Badge, Box, Button, Divider,IconButton,Menu,MenuItem, 
+Toolbar, Tooltip, Typography,} from "@mui/material";
 
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
@@ -22,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useAuth } from "@/hooks/use_auth";
-import { useNotifications } from "@/hooks/use_notifications";
+import { useNotificationStore } from "@/stores/notification_store";
 
 function NavLinks({ role }: { role: string }) {
   if (role === "RENTER") {
@@ -84,16 +73,16 @@ export default function Header() {
 
   const { user, isLoading, isAuthenticated, logout } = useAuth();
 
-  const { data: notifications } = useNotifications();
+  // Zustand: read the count synced by NotificationsPage — no extra API call
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const resetNotifications = useNotificationStore((s) => s.reset);
 
   const [anchorEl, setAnchorEl] =
     useState<null | HTMLElement>(null);
 
-  const unreadCount =
-    notifications?.filter((n) => !n.isRead).length ?? 0;
-
   async function handleLogout() {
     setAnchorEl(null);
+    resetNotifications(); // clear badge immediately on logout
     await logout();
     router.replace("/login");
   }

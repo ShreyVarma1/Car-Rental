@@ -24,7 +24,7 @@ describe("BookingCompletionService", () => {
     >(),
 
     markBookingsCompleted: jest.fn<
-      () => Promise<{ count: number }>
+      (ids: string[]) => Promise<{ count: number }>
     >(),
   };
 
